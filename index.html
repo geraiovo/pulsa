@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulsaKu — Isi Pulsa & Pembayaran Online</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --bg: #060d09;
+  --bg2: #0c1a12;
+  --card: #111e17;
+  --card2: #172820;
+  --accent: #00e676;
+  --accent2: #00c853;
+  --accent-glow: rgba(0,230,118,0.12);
+  --text: #dff0e6;
+  --text2: #a3c4ae;
+  --muted: #4a6e56;
+  --border: #1b3326;
+  --danger: #ff5252;
+  --warn: #ffab40;
+  --info: #26c6da;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+h1,h2,h3,h4,h5 { font-family: 'Outfit', sans-serif; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+.accent-grad {
+  background: linear-gradient(135deg, var(--accent), #00bfa5);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #00bfa5);
+  color: #060d09; font-weight: 700; border: none; border-radius: 12px;
+  padding: 12px 28px; cursor: pointer; font-size: 15px;
+  transition: all .2s; box-shadow: 0 4px 24px rgba(0,230,118,0.2);
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(0,230,118,0.35); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.btn-outline {
+  background: transparent; color: var(--accent); font-weight: 600;
+  border: 2px solid var(--accent); border-radius: 12px;
+  padding: 10px 24px; cursor: pointer; font-size: 14px;
+  transition: all .2s; font-family: 'DM Sans', sans-serif;
+}
+.btn-outline:hover { background: var(--accent-glow); }
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; transition: all .25s;
+}
+.card:hover { border-color: rgba(0,230,118,0.3); }
+.card-select {
+  cursor: pointer; position: relative; overflow: hidden;
+}
+.card-select::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(0,230,118,0.08), transparent);
+  opacity: 0; transition: opacity .25s;
+}
+.card-select:hover::before, .card-select.active::before { opacity: 1; }
+.card-select.active { border-color: var(--accent); box-shadow: 0 0 20px rgba(0,230,118,0.15); }
+.input-field {
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 12px 16px; color: var(--text);
+  font-size: 15px; width: 100%; outline: none; transition: border .2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.input-field:focus { border-color: var(--accent); }
+.input-field::placeholder { color: var(--muted); }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.badge-success { background: rgba(0,230,118,0.15); color: var(--accent); }
+.badge-pending { background: rgba(255,171,64,0.15); color: var(--warn); }
+.badge-fail { background: rgba(255,82,82,0.15); color: var(--danger); }
+.badge-info { background: rgba(38,198,218,0.15); color: var(--info); }
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 20px; min-width: 300px; display: flex; align-items: center; gap: 10px;
+  animation: slideIn .3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.out { animation: slideOut .3s ease forwards; }
+@keyframes slideIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+@keyframes slideOut { from { transform: translateX(0); opacity:1; } to { transform: translateX(100%); opacity:0; } }
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 8000;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn .2s ease; padding: 20px;
+}
+.modal-box {
+  background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+  padding: 28px; max-width: 520px; width: 100%; max-height: 80vh; overflow-y: auto;
+  animation: scaleIn .25s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes scaleIn { from { transform: scale(.9); opacity:0; } to { transform: scale(1); opacity:1; } }
+.glow-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none;
+  animation: orbFloat 8s ease-in-out infinite;
+}
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(30px,-20px) scale(1.1); }
+  66% { transform: translate(-20px,30px) scale(0.9); }
+}
+.step-indicator { display: flex; gap: 4px; align-items: center; }
+.step-dot {
+  width: 32px; height: 4px; border-radius: 2px; background: var(--border);
+  transition: all .3s;
+}
+.step-dot.active { background: var(--accent); width: 48px; }
+.step-dot.done { background: var(--muted); }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 16px; font-size: 12px; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text2); }
+tr:hover td { background: rgba(0,230,118,0.03); }
+.skeleton { background: linear-gradient(90deg, var(--bg2) 25%, var(--card) 50%, var(--bg2) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.nav-link { position: relative; color: var(--text2); transition: color .2s; cursor: pointer; font-weight: 500; }
+.nav-link:hover, .nav-link.active { color: var(--accent); }
+.nav-link.active::after {
+  content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+  height: 2px; background: var(--accent); border-radius: 1px;
+}
+.countdown { font-variant-numeric: tabular-nums; }
+@media (max-width: 768px) {
+  .toast { min-width: 260px; font-size: 13px; }
+  .modal-box { padding: 20px; }
+  td, th { padding: 8px 10px; font-size: 12px; }
+}
+.pulse-ring {
+  animation: pulseRing 2s ease-out infinite;
+}
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(0,230,118,0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(0,230,118,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,230,118,0); }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVIGASI -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b" style="background:rgba(6,13,9,0.85);border-color:var(--border)">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    <a onclick="navigate('home')" class="flex items-center gap-2 cursor-pointer">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),#00bfa5)">
+        <i class="fas fa-bolt text-sm" style="color:var(--bg)"></i>
+      </div>
+      <span class="font-extrabold text-lg" style="font-family:Outfit">PulsaKu</span>
+    </a>
+    <div id="nav-links" class="hidden md:flex items-center gap-6 text-sm">
+      <span class="nav-link" data-page="home" onclick="navigate('home')">Beranda</span>
+      <span class="nav-link" data-page="produk" onclick="navigate('produk')">Produk</span>
+      <span class="nav-link" data-page="riwayat" onclick="navigate('riwayat')">Riwayat</span>
+      <span class="nav-link" data-page="login-admin" onclick="navigate('login-admin')">
+        <i class="fas fa-lock text-xs mr-1"></i>Admin
+      </span>
+    </div>
+    <button id="mobile-toggle" class="md:hidden text-xl" style="color:var(--text2)" onclick="toggleMobileMenu()">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobile-menu" class="fixed inset-0 z-40 hidden" style="background:rgba(6,13,9,0.95)">
+  <div class="flex flex-col items-center justify-center h-full gap-8 text-xl">
+    <span class="nav-link" onclick="navigate('home');toggleMobileMenu()">Beranda</span>
+    <span class="nav-link" onclick="navigate('produk');toggleMobileMenu()">Produk</span>
+    <span class="nav-link" onclick="navigate('riwayat');toggleMobileMenu()">Riwayat</span>
+    <span class="nav-link" onclick="navigate('login-admin');toggleMobileMenu()">
+      <i class="fas fa-lock text-sm mr-2"></i>Admin
+    </span>
+    <button class="mt-8 text-sm" style="color:var(--muted)" onclick="toggleMobileMenu()">
+      <i class="fas fa-times mr-2"></i>Tutup
+    </button>
+  </div>
+</div>
+
+<!-- KONTEN UTAMA -->
+<main id="app" class="pt-16 min-h-screen"></main>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-container"></div>
+
+<script>
+// ============================================================
+// KONFIGURASI — Ganti value di sini untuk koneksi API sungguhan
+// ============================================================
+const CONFIG = {
+  // Digiflazz: ganti dengan API key & username asli Anda
+  digiflazz: {
+    username: 'tokuyoD7BwMo',   // ← ganti
+    apiKey: '793dc432-2128-516c-8645-4828080b0bea',      // ← ganti
+    baseUrl: 'https://api.digiflazz.com/v1'
+  },
+  // Tripay: ganti dengan credential Tripay Anda
+  tripay: {
+    apiKey: 'tripay_api_key',     // ← ganti
+    privateKey: 'tripay_private', // ← ganti
+    merchantCode: 'TXXXXX',       // ← ganti
+    mode: 'sandbox'               // ganti 'production' saat live
+  },
+  // Admin default
+  adminUser: 'admin',
+  adminPass: 'admin123',
+  // Biaya admin per transaksi
+  adminFee: 1500
+};
+
+// ============================================================
+// DATA PRODUK (simulasi data dari API Digiflazz)
+// ============================================================
+const OPERATORS = {
+  telkomsel: { name: 'Telkomsel', prefix: ['0811','0812','0813','0821','0822','0823','0851','0852','0853'], color: '#ff3d00', icon: 'fas fa-signal' },
+  indosat: { name: 'Indosat', prefix: ['0814','0815','0816','0855','0856','0857','0858'], color: '#ffd600', icon: 'fas fa-signal' },
+  xl: { name: 'XL / Axis', prefix: ['0817','0818','0819','0859','0877','0878'], color: '#2979ff', icon: 'fas fa-signal' },
+  tri: { name: 'Tri', prefix: ['0895','0896','0897','0898','0899'], color: '#e91e63', icon: 'fas fa-signal' },
+  smartfren: { name: 'Smartfren', prefix: ['0881','0882','0883','0884','0885','0886','0887','0888','0889'], color: '#e040fb', icon: 'fas fa-signal' }
+};
+
+// Generate data produk pulsa
+function generatePulsaProducts() {
+  const products = [];
+  const nominals = [
+    {nom:5000, price:5800}, {nom:10000, price:10800}, {nom:15000, price:15700},
+    {nom:20000, price:20600}, {nom:25000, price:25500}, {nom:50000, price:50500},
+    {nom:100000, price:100500}
+  ];
+  Object.entries(OPERATORS).forEach(([key, op]) => {
+    nominals.forEach((n, i) => {
+      products.push({
+        id: `pulsa-${key}-${n.nom}`, category: 'pulsa', operator: key,
+        operatorName: op.name, name: `Pulsa ${op.name} ${formatRupiah(n.nom)}`,
+        nominal: n.nom, price: n.price, sku: `TLK${key.toUpperCase()}${n.nom}`
+      });
+    });
+  });
+  return products;
+}
+
+function generatePaketDataProducts() {
+  const products = [];
+  const pkts = {
+    telkomsel: [
+      {name:'1GB 30hr', price:12000}, {name:'3GB 30hr', price:25000},
+      {name:'5GB 30hr', price:38000}, {name:'10GB 30hr', price:65000}, {name:'25GB 30hr', price:100000}
+    ],
+    indosat: [
+      {name:'1GB 30hr', price:11000}, {name:'3GB 30hr', price:23000},
+      {name:'5GB 30hr', price:35000}, {name:'10GB 30hr', price:60000}, {name:'25GB 30hr', price:95000}
+    ],
+    xl: [
+      {name:'1GB 30hr', price:10500}, {name:'3GB 30hr', price:22000},
+      {name:'5GB 30hr', price:33000}, {name:'10GB 30hr', price:58000}, {name:'25GB 30hr', price:90000}
+    ],
+    tri: [
+      {name:'1GB 30hr', price:10000}, {name:'3GB 30hr', price:20000},
+      {name:'5GB 30hr', price:30000}, {name:'10GB 30hr', price:55000}, {name:'25GB 30hr', price:85000}
+    ],
+    smartfren: [
+      {name:'1GB 30hr', price:10000}, {name:'3GB 30hr', price:21000},
+      {name:'5GB 30hr', price:32000}, {name:'10GB 30hr', price:56000}, {name:'25GB 30hr', price:88000}
+    ]
+  };
+  Object.entries(pkts).forEach(([op, list]) => {
+    list.forEach((p, i) => {
+      products.push({
+        id: `paket-${op}-${i}`, category: 'paket-data', operator: op,
+        operatorName: OPERATORS[op].name, name: `${OPERATORS[op].name} ${p.name}`,
+        nominal: null, price: p.price, sku: `PKT${op.toUpperCase()}${i}`
+      });
+    });
+  });
+  return products;
+}
+
+function generateEwalletProducts() {
+  const products = [];
+  const wallets = {
+    gopay: {name:'GoPay', nominals:[10000,20000,50000,100000,200000]},
+    ovo: {name:'OVO', nominals:[10000,20000,50000,100000,200000]},
+    dana: {name:'DANA', nominals:[10000,20000,50000,100000,200000]},
+    shopeepay: {name:'ShopeePay', nominals:[10000,20000,50000,100000,200000]}
+  };
+  Object.entries(wallets).forEach(([key, w]) => {
+    w.nominals.forEach(n => {
+      products.push({
+        id: `ew-${key}-${n}`, category: 'e-wallet', operator: key,
+        operatorName: w.name, name: `${w.name} ${formatRupiah(n)}`,
+        nominal: n, price: n + 1500, sku: `EW${key.toUpperCase()}${n}`
+      });
+    });
+  });
+  return products;
+}
+
+function generateTokenPLN() {
+  const nominals = [20000,50000,100000,200000,500000,1000000];
+  return nominals.map(n => ({
+    id: `pln-${n}`, category: 'token-pln', operator: 'pln',
+    operatorName: 'PLN', name: `Token PLN ${formatRupiah(n)}`,
+    nominal: n, price: n + 2000, sku: `PLN${n}`
+  }));
+}
+
+const ALL_PRODUCTS = [
+  ...generatePulsaProducts(),
+  ...generatePaketDataProducts(),
+  ...generateEwalletProducts(),
+  ...generateTokenPLN()
+];
+
+const CATEGORIES = [
+  { id: 'pulsa', name: 'Pulsa', icon: 'fas fa-mobile-screen', desc: 'Isi ulang pulsa semua operator' },
+  { id: 'paket-data', name: 'Paket Data', icon: 'fas fa-wifi', desc: 'Internet murah & cepat' },
+  { id: 'e-wallet', name: 'E-Wallet', icon: 'fas fa-wallet', desc: 'Top up GoPay, OVO, DANA' },
+  { id: 'token-pln', name: 'Token PLN', icon: 'fas fa-bolt', desc: 'Token listrik prabayar' }
+];
+
+const PAYMENT_METHODS = [
+  { id: 'qris', name: 'QRIS', icon: 'fas fa-qrcode', desc: 'Scan QR dari aplikasi apapun' },
+  { id: 'gopay', name: 'GoPay', icon: 'fas fa-wallet', desc: 'Bayar via GoPay / GoPayLater' },
+  { id: 'ovo', name: 'OVO', icon: 'fas fa-money-bill', desc: 'Bayar via aplikasi OVO' },
+  { id: 'dana', name: 'DANA', icon: 'fas fa-coins', desc: 'Bayar via aplikasi DANA' },
+  { id: 'bank', name: 'Transfer Bank', icon: 'fas fa-building-columns', desc: 'BCA, BNI, BRI, Mandiri' }
+];
+
+// ============================================================
+// DATABASE LAYER (localStorage — ganti dengan API backend)
+// ============================================================
+const DB = {
+  _get(key) { try { return JSON.parse(localStorage.getItem(`pulsaku_${key}`)) || null; } catch { return null; } },
+  _set(key, val) { localStorage.setItem(`pulsaku_${key}`, JSON.stringify(val)); },
+
+  getTransactions() { return this._get('transactions') || []; },
+  saveTransaction(tx) {
+    const list = this.getTransactions();
+    list.unshift(tx);
+    this._set('transactions', list);
+    return tx;
+  },
+  updateTransaction(id, updates) {
+    const list = this.getTransactions();
+    const idx = list.findIndex(t => t.id === id);
+    if (idx !== -1) { Object.assign(list[idx], updates); this._set('transactions', list); }
+    return list[idx];
+  },
+  getTransaction(id) { return this.getTransactions().find(t => t.id === id); },
+
+  getSettings() {
+    return this._get('settings') || {
+      digiflazz_user: CONFIG.digiflazz.username,
+      digiflazz_key: CONFIG.digiflazz.apiKey,
+      tripay_key: CONFIG.tripay.apiKey,
+      tripay_private: CONFIG.tripay.privateKey,
+      tripay_merchant: CONFIG.tripay.merchantCode,
+      tripay_mode: CONFIG.tripay.mode,
+      admin_fee: CONFIG.adminFee
+    };
+  },
+  saveSettings(s) { this._set('settings', s); },
+
+  getAdminSession() { return this._get('admin_session'); },
+  setAdminSession(v) { this._set('admin_session', v); },
+  clearAdminSession() { localStorage.removeItem('pulsaku_admin_session'); }
+};
+
+// ============================================================
+// MOCK API LAYER
+// — Ganti fungsi-fungsi ini dengan fetch() ke backend Anda
+// — Backend Anda yang memanggil Digiflazz/Tripay API secara aman
+// ============================================================
+const API = {
+  // Cek harga produk (simulasi Digiflazz /price-list)
+  async checkPrice(sku) {
+    await delay(300);
+    const p = ALL_PRODUCTS.find(pr => pr.sku === sku);
+    if (!p) throw new Error('Produk tidak ditemukan');
+    return { ...p, status: 'available' };
+
+    /* === CONTOH IMPLEMENTASI SUNGGUHAN (via backend Anda) ===
+    const res = await fetch('/api/price-list', {
+      headers: { 'Authorization': 'Bearer ' + DB.getSettings().digiflazz_key }
+    });
+    return res.json();
+    */
+  },
+
+  // Buat transaksi (simulasi Digiflazz /transaction)
+  async createTransaction(data) {
+    await delay(800);
+    const txId = 'TX' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2,4).toUpperCase();
+    const tx = {
+      id: txId,
+      product: data.product,
+      customer_id: data.phone || data.customerId,
+      price: data.price,
+      admin_fee: DB.getSettings().admin_fee,
+      total: data.price + DB.getSettings().admin_fee,
+      payment_method: data.paymentMethod,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      sn: null, // serial number, diisi setelah sukses
+      note: null
+    };
+    DB.saveTransaction(tx);
+    return tx;
+
+    /* === CONTOH IMPLEMENTASI SUNGGUHAN ===
+    const res = await fetch('/api/transaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: DB.getSettings().digiflazz_user,
+        buyer_sku_code: data.sku,
+        customer_no: data.phone,
+        ref_id: txId
+      })
+    });
+    return res.json();
+    */
+  },
+
+  // Buat pembayaran (simulasi Tripay /transaction/create)
+  async createPayment(txId, method) {
+    await delay(600);
+    const tx = DB.getTransaction(txId);
+    if (!tx) throw new Error('Transaksi tidak ditemukan');
+    const payRef = 'PAY' + Date.now().toString(36).toUpperCase();
+    DB.updateTransaction(txId, {
+      payment_ref: payRef,
+      payment_expires: new Date(Date.now() + 15*60*1000).toISOString(),
+      qr_string: `pulsaku:${txId}:${payRef}:${tx.total}` // simulasi QR payload
+    });
+    return DB.getTransaction(txId);
+
+    /* === CONTOH IMPLEMENTASI SUNGGUHAN (Tripay) ===
+    const settings = DB.getSettings();
+    const res = await fetch(`https://tripay.co.id/api-sandbox/transaction/create`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + settings.tripay_key,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        method: method,
+        merchant_ref: txId,
+        amount: tx.total,
+        customer_name: 'Customer',
+        order_items: [{ name: tx.product.name, price: tx.price, quantity: 1 }],
+        callback_url: 'https://domainanda.com/callback',
+        return_url: 'https://domainanda.com/return',
+        expired_time: 900 // 15 menit
+      })
+    });
+    return res.json();
+    */
+  },
+
+  // Cek status transaksi (simulasi polling)
+  async checkStatus(txId) {
+    await delay(400);
+    return DB.getTransaction(txId);
+
+    /* === CONTOH IMPLEMENTASI SUNGGUHAN ===
+    const res = await fetch(`/api/transaction/${txId}/status`);
+    return res.json();
+    */
+  },
+
+  // Simulasi pembayaran berhasil (untuk demo)
+  simulatePayment(txId) {
+    const sn = 'SN' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2,6).toUpperCase();
+    return DB.updateTransaction(txId, {
+      status: 'success',
+      sn: sn,
+      note: 'Transaksi berhasil diproses',
+      updated_at: new Date().toISOString(),
+      paid_at: new Date().toISOString()
+    });
+  }
+};
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function formatRupiah(n) {
+  return 'Rp' + Number(n).toLocaleString('id-ID');
+}
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) +
+    ' ' + d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+}
+function timeAgo(iso) {
+  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return 'baru saja';
+  if (s < 3600) return Math.floor(s/60) + ' menit lalu';
+  if (s < 86400) return Math.floor(s/3600) + ' jam lalu';
+  return Math.floor(s/86400) + ' hari lalu';
+}
+function detectOperator(phone) {
+  const p = phone.replace(/\D/g,'');
+  for (const [key, op] of Object.entries(OPERATORS)) {
+    if (op.prefix.some(pre => p.startsWith(pre))) return key;
+  }
+  return null;
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,6); }
+
+// Toast notification
+function toast(msg, type='success') {
+  const c = document.getElementById('toast-container');
+  const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle', warning:'fa-exclamation-triangle' };
+  const colors = { success:'var(--accent)', error:'var(--danger)', info:'var(--info)', warning:'var(--warn)' };
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<i class="fas ${icons[type]}" style="color:${colors[type]};font-size:18px"></i><span style="color:var(--text);font-size:14px">${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+// Modal
+function showModal(html) {
+  document.getElementById('modal-container').innerHTML =
+    `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-box">${html}</div></div>`;
+}
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+
+// ============================================================
+// STATE APLIKASI
+// ============================================================
+let currentPage = 'home';
+let orderState = { category:null, operator:null, product:null, phone:null, paymentMethod:null, txId:null };
+let statusPolling = null;
+
+// ============================================================
+// ROUTER
+// ============================================================
+function navigate(page, data) {
+  if (statusPolling) { clearInterval(statusPolling); statusPolling = null; }
+  currentPage = page;
+  if (data) Object.assign(orderState, data);
+  // Update nav active state
+  document.querySelectorAll('.nav-link[data-page]').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleMobileMenu() {
+  document.getElementById('mobile-menu').classList.toggle('hidden');
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const app = document.getElementById('app');
+  // Sembunyikan nav untuk halaman admin dashboard
+  const hideNav = ['admin'].includes(currentPage);
+  document.getElementById('navbar').style.display = hideNav ? 'none' : '';
+
+  switch(currentPage) {
+    case 'home': app.innerHTML = pageHome(); break;
+    case 'produk': app.innerHTML = pageProduk(); break;
+    case 'order': app.innerHTML = pageOrder(); break;
+    case 'pembayaran': app.innerHTML = pagePembayaran(); break;
+    case 'riwayat': app.innerHTML = pageRiwayat(); break;
+    case 'login-admin': app.innerHTML = pageLoginAdmin(); break;
+    case 'admin': app.innerHTML = pageAdmin(); break;
+    default: app.innerHTML = pageHome();
+  }
+}
+
+// ============================================================
+// HALAMAN: BERANDA
+// ============================================================
+function pageHome() {
+  const txCount = DB.getTransactions().length;
+  return `
+  <div class="relative overflow-hidden">
+    <!-- Background orbs -->
+    <div class="glow-orb" style="width:400px;height:400px;background:rgba(0,230,118,0.06);top:-100px;right:-100px"></div>
+    <div class="glow-orb" style="width:300px;height:300px;background:rgba(0,191,165,0.05);bottom:200px;left:-80px;animation-delay:-3s"></div>
+
+    <!-- HERO -->
+    <section class="max-w-6xl mx-auto px-4 pt-20 pb-16 relative z-10">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="badge badge-success mb-4"><i class="fas fa-zap"></i> Tercepat & Termurah</div>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6" style="font-family:Outfit">
+            Isi Pulsa<br><span class="accent-grad">Tanpa Ribet</span>
+          </h1>
+          <p class="text-lg mb-8" style="color:var(--text2);max-width:440px">
+            Proses instan, harga bersaing, pembayaran QRIS & e-wallet. Semua operator tersedia 24/7.
+          </p>
+          <!-- Quick Order -->
+          <div class="card" style="background:var(--bg2);border-color:var(--border)">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div class="flex-1 relative">
+                <i class="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2" style="color:var(--muted)"></i>
+                <input id="hero-phone" type="tel" class="input-field pl-11" placeholder="08xx xxxx xxxx" maxlength="15"
+                  oninput="onHeroPhoneInput(this.value)">
+                <div id="hero-operator-badge" class="absolute right-3 top-1/2 -translate-y-1/2 hidden">
+                  <span class="badge badge-info text-xs" id="hero-op-text"></span>
+                </div>
+              </div>
+              <button class="btn-primary whitespace-nowrap" onclick="heroOrder()">
+                <i class="fas fa-arrow-right mr-2"></i>Beli Sekarang
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center gap-6 mt-6 text-sm" style="color:var(--muted)">
+            <span><i class="fas fa-check mr-1" style="color:var(--accent)"></i>${txCount}+ transaksi</span>
+            <span><i class="fas fa-clock mr-1" style="color:var(--accent)"></i>Proses &lt; 1 menit</span>
+          </div>
+        </div>
+        <!-- Hero visual -->
+        <div class="hidden md:flex justify-center">
+          <div class="relative">
+            <div class="w-72 h-72 rounded-3xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(0,230,118,0.1),rgba(0,191,165,0.05));border:1px solid rgba(0,230,118,0.15)">
+              <div class="text-center">
+                <div class="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center pulse-ring" style="background:linear-gradient(135deg,var(--accent),#00bfa5)">
+                  <i class="fas fa-bolt text-3xl" style="color:var(--bg)"></i>
+                </div>
+                <div class="text-5xl font-black accent-grad" style="font-family:Outfit">24/7</div>
+                <div class="text-sm mt-1" style="color:var(--text2)">Selalu Online</div>
+              </div>
+            </div>
+            <!-- Floating cards -->
+            <div class="absolute -top-4 -right-8 card px-4 py-3 text-sm" style="animation: orbFloat 6s ease-in-out infinite">
+              <i class="fas fa-qrcode mr-2" style="color:var(--accent)"></i>QRIS
+            </div>
+            <div class="absolute -bottom-4 -left-8 card px-4 py-3 text-sm" style="animation: orbFloat 6s ease-in-out infinite;animation-delay:-2s">
+              <i class="fas fa-wallet mr-2" style="color:var(--warn)"></i>E-Wallet
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KATEGORI -->
+    <section class="max-w-6xl mx-auto px-4 pb-16 relative z-10">
+      <h2 class="text-2xl font-bold mb-2" style="font-family:Outfit">Layanan Kami</h2>
+      <p class="mb-8" style="color:var(--muted)">Pilih kategori produk yang kamu butuhkan</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        ${CATEGORIES.map(cat => `
+          <div class="card card-select text-center py-8" onclick="navigate('produk',{category:'${cat.id}'})">
+            <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:var(--accent-glow)">
+              <i class="${cat.icon} text-xl" style="color:var(--accent)"></i>
+            </div>
+            <h3 class="font-bold mb-1">${cat.name}</h3>
+            <p class="text-xs" style="color:var(--muted)">${cat.desc}</p>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <!-- CARA ORDER -->
+    <section class="max-w-6xl mx-auto px-4 pb-16 relative z-10">
+      <h2 class="text-2xl font-bold mb-8" style="font-family:Outfit">Cara Order</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        ${[
+          { step:'01', icon:'fa-search', title:'Pilih Produk', desc:'Masukkan nomor HP, pilih operator dan nominal pulsa atau paket data.' },
+          { step:'02', icon:'fa-credit-card', title:'Bayar', desc:'Pilih metode pembayaran QRIS, GoPay, OVO, DANA, atau transfer bank.' },
+          { step:'03', icon:'fa-check-double', title:'Selesai', desc:'Transaksi diproses otomatis. Pulsa langsung masuk dalam hitungan detik.' }
+        ].map(s => `
+          <div class="card flex gap-4">
+            <div class="flex-shrink-0">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background:var(--accent-glow)">
+                <i class="fas ${s.icon}" style="color:var(--accent)"></i>
+              </div>
+            </div>
+            <div>
+              <div class="text-xs font-bold mb-1" style="color:var(--accent)">LANGKAH ${s.step}</div>
+              <h3 class="font-bold mb-1">${s.title}</h3>
+              <p class="text-sm" style="color:var(--muted)">${s.desc}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <!-- OPERATOR -->
+    <section class="max-w-6xl mx-auto px-4 pb-20 relative z-10">
+      <h2 class="text-2xl font-bold mb-8" style="font-family:Outfit">Operator Didukung</h2>
+      <div class="flex flex-wrap gap-4">
+        ${Object.entries(OPERATORS).map(([key, op]) => `
+          <div class="card px-5 py-3 flex items-center gap-3 cursor-pointer" onclick="navigate('produk',{category:'pulsa',operator:'${key}'})">
+            <i class="${op.icon}" style="color:${op.color}"></i>
+            <span class="font-semibold text-sm">${op.name}</span>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t py-8 text-center text-sm" style="border-color:var(--border);color:var(--muted)">
+      <p>&copy; ${new Date().getFullYear()} PulsaKu. Semua harga dapat berubah sewaktu-waktu.</p>
+    </footer>
+  </div>`;
+}
+
+function onHeroPhoneInput(val) {
+  const badge = document.getElementById('hero-operator-badge');
+  const text = document.getElementById('hero-op-text');
+  const op = detectOperator(val);
+  if (op && val.length >= 10) {
+    badge.classList.remove('hidden');
+    text.textContent = OPERATORS[op].name;
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function heroOrder() {
+  const phone = document.getElementById('hero-phone')?.value.replace(/\D/g,'') || '';
+  if (phone.length < 10) return toast('Masukkan nomor HP yang valid', 'error');
+  const op = detectOperator(phone);
+  if (!op) return toast('Operator tidak dikenali', 'error');
+  navigate('produk', { category:'pulsa', operator:op, phone });
+}
+
+// ============================================================
+// HALAMAN: PRODUK
+// ============================================================
+function pageProduk() {
+  const cat = orderState.category || 'pulsa';
+  const filtered = ALL_PRODUCTS.filter(p => p.category === cat);
+  const operatorsInCat = [...new Set(filtered.map(p => p.operator))];
+  const selectedOp = orderState.operator || (operatorsInCat.length === 1 ? operatorsInCat[0] : null);
+  const finalProducts = selectedOp ? filtered.filter(p => p.operator === selectedOp) : filtered;
+  const isPLN = cat === 'token-pln';
+  const isEW = cat === 'e-wallet';
+
+  return `
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-sm mb-6" style="color:var(--muted)">
+      <span class="cursor-pointer hover:underline" onclick="navigate('home')">Beranda</span>
+      <i class="fas fa-chevron-right text-xs"></i>
+      <span style="color:var(--text)">${CATEGORIES.find(c=>c.id===cat)?.name || cat}</span>
+    </div>
+
+    <h1 class="text-3xl font-bold mb-2" style="font-family:Outfit">${CATEGORIES.find(c=>c.id===cat)?.name || 'Produk'}</h1>
+    <p class="mb-8" style="color:var(--muted)">${CATEGORIES.find(c=>c.id===cat)?.desc || ''}</p>
+
+    <!-- Input nomor (bukan PLN) -->
+    ${!isPLN ? `
+    <div class="card mb-6" style="background:var(--bg2)">
+      <label class="block text-sm font-semibold mb-2" style="color:var(--text2)">
+        ${isEW ? 'Nomor HP / ID E-Wallet' : 'Nomor HP Tujuan'}
+      </label>
+      <div class="flex gap-3">
+        <div class="flex-1 relative">
+          <i class="fas ${isEW ? 'fa-wallet' : 'fa-phone'} absolute left-4 top-1/2 -translate-y-1/2" style="color:var(--muted)"></i>
+          <input id="prod-phone" type="text" class="input-field pl-11" placeholder="${isEW ? 'Contoh: 08xxx atau nomor e-wallet' : '08xx xxxx xxxx'}"
+            value="${orderState.phone || ''}" maxlength="20"
+            oninput="onProdPhoneInput(this.value)">
+          <div id="prod-op-badge" class="absolute right-3 top-1/2 -translate-y-1/2 hidden">
+            <span class="badge badge-info text-xs" id="prod-op-text"></span>
+          </div>
+        </div>
+      </div>
+    </div>` : `
+    <div class="card mb-6" style="background:var(--bg2)">
+      <label class="block text-sm font-semibold mb-2" style="color:var(--text2)">ID Pelanggan PLN</label>
+      <input id="prod-phone" type="text" class="input-field" placeholder="Contoh: 123456789012" maxlength="20"
+        value="${orderState.phone || ''}" oninput="orderState.phone=this.value">
+    </div>`}
+
+    <!-- Operator tabs (bukan PLN) -->
+    ${!isPLN ? `
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+      ${operatorsInCat.map(op => {
+        const info = OPERATORS[op] || { name: op, color: '#999' };
+        return `<button class="card-select card px-4 py-2 text-sm font-semibold whitespace-nowrap flex items-center gap-2 ${selectedOp===op?'active':''}"
+          onclick="orderState.operator='${op}';render()">
+          <i class="fas fa-signal" style="color:${info.color || 'var(--accent)'}"></i>${info.name}
+        </button>`;
+      }).join('')}
+    </div>` : ''}
+
+    <!-- Daftar produk -->
+    ${finalProducts.length === 0 ? `
+      <div class="text-center py-16" style="color:var(--muted)">
+        <i class="fas fa-box-open text-4xl mb-4"></i>
+        <p>Tidak ada produk untuk filter ini</p>
+      </div>
+    ` : `
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      ${finalProducts.map(p => `
+        <div class="card card-select flex items-center justify-between" onclick="selectProduct('${p.id}')">
+          <div>
+            <div class="font-semibold text-sm">${p.name}</div>
+            <div class="text-xs mt-1" style="color:var(--muted)">${p.category === 'paket-data' ? 'Paket Data' : p.category === 'e-wallet' ? 'E-Wallet' : 'Pulsa Reguler'}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold" style="color:var(--accent)">${formatRupiah(p.price)}</div>
+            <div class="text-xs mt-1" style="color:var(--muted)"><i class="fas fa-arrow-right"></i></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`}
+  </div>`;
+}
+
+function onProdPhoneInput(val) {
+  orderState.phone = val;
+  const badge = document.getElementById('prod-op-badge');
+  const text = document.getElementById('prod-op-text');
+  const op = detectOperator(val);
+  if (op && val.length >= 10 && orderState.category !== 'e-wallet') {
+    badge.classList.remove('hidden');
+    text.textContent = OPERATORS[op].name;
+    if (!orderState.operator) { orderState.operator = op; render(); }
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function selectProduct(productId) {
+  const phone = document.getElementById('prod-phone')?.value || orderState.phone || '';
+  if (!phone || phone.length < 8) return toast('Masukkan nomor tujuan terlebih dahulu', 'error');
+  const product = ALL_PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+  orderState.product = product;
+  navigate('order');
+}
+
+// ============================================================
+// HALAMAN: KONFIRMASI ORDER
+// ============================================================
+function pageOrder() {
+  const p = orderState.product;
+  if (!p) { navigate('produk'); return ''; }
+  const fee = DB.getSettings().admin_fee;
+  const total = p.price + fee;
+
+  return `
+  <div class="max-w-lg mx-auto px-4 py-8">
+    <!-- Step indicator -->
+    <div class="step-indicator mb-8 justify-center">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <h2 class="text-2xl font-bold mb-6" style="font-family:Outfit">Konfirmasi Order</h2>
+
+    <!-- Detail produk -->
+    <div class="card mb-4" style="background:var(--bg2)">
+      <div class="text-xs font-semibold mb-3" style="color:var(--muted)">DETAIL PRODUK</div>
+      <div class="flex justify-between mb-2">
+        <span style="color:var(--text2)">Produk</span>
+        <span class="font-semibold">${p.name}</span>
+      </div>
+      <div class="flex justify-between mb-2">
+        <span style="color:var(--text2)">${p.category==='token-pln'?'ID Pelanggan':'Nomor Tujuan'}</span>
+        <span class="font-semibold">${orderState.phone}</span>
+      </div>
+    </div>
+
+    <!-- Rincian harga -->
+    <div class="card mb-6" style="background:var(--bg2)">
+      <div class="text-xs font-semibold mb-3" style="color:var(--muted)">RINCIAN HARGA</div>
+      <div class="flex justify-between mb-2">
+        <span style="color:var(--text2)">Harga Produk</span>
+        <span>${formatRupiah(p.price)}</span>
+      </div>
+      <div class="flex justify-between mb-2">
+        <span style="color:var(--text2)">Biaya Admin</span>
+        <span>${formatRupiah(fee)}</span>
+      </div>
+      <div class="border-t my-3" style="border-color:var(--border)"></div>
+      <div class="flex justify-between">
+        <span class="font-bold text-lg">Total Bayar</span>
+        <span class="font-bold text-lg" style="color:var(--accent)">${formatRupiah(total)}</span>
+      </div>
+    </div>
+
+    <!-- Metode pembayaran -->
+    <div class="text-xs font-semibold mb-3" style="color:var(--muted)">PILIH METODE PEMBAYARAN</div>
+    <div class="grid grid-cols-1 gap-2 mb-6">
+      ${PAYMENT_METHODS.map(m => `
+        <div class="card card-select flex items-center gap-3 ${orderState.paymentMethod===m.id?'active':''}"
+          onclick="orderState.paymentMethod='${m.id}';render()">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:var(--accent-glow)">
+            <i class="${m.icon}" style="color:var(--accent)"></i>
+          </div>
+          <div>
+            <div class="font-semibold text-sm">${m.name}</div>
+            <div class="text-xs" style="color:var(--muted)">${m.desc}</div>
+          </div>
+          <div class="ml-auto">
+            ${orderState.paymentMethod===m.id ? '<i class="fas fa-check-circle" style="color:var(--accent)"></i>' : '<i class="far fa-circle" style="color:var(--muted)"></i>'}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <button class="btn-primary w-full text-center" id="btn-pay"
+      ${!orderState.paymentMethod ? 'disabled' : ''}
+      onclick="processOrder()">
+      <i class="fas fa-lock mr-2"></i>Bayar ${formatRupiah(total)}
+    </button>
+
+    <p class="text-center text-xs mt-4" style="color:var(--muted)">
+      Dengan melanjutkan, kamu menyetujui syarat & ketentuan yang berlaku.
+    </p>
+  </div>`;
+}
+
+async function processOrder() {
+  const btn = document.getElementById('btn-pay');
+  if (!btn || !orderState.paymentMethod) return;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
+
+  try {
+    // 1. Buat transaksi
+    const tx = await API.createTransaction({
+      product: orderState.product,
+      phone: orderState.phone,
+      sku: orderState.product.sku,
+      price: orderState.product.price,
+      paymentMethod: orderState.paymentMethod
+    });
+    orderState.txId = tx.id;
+
+    // 2. Buat pembayaran
+    const payTx = await API.createPayment(tx.id, orderState.paymentMethod);
+
+    toast('Pesanan dibuat, silakan lakukan pembayaran', 'success');
+    navigate('pembayaran');
+  } catch(e) {
+    toast('Gagal membuat pesanan: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fas fa-lock mr-2"></i>Bayar ${formatRupiah(orderState.product.price + DB.getSettings().admin_fee)}`;
+  }
+}
+
+// ============================================================
+// HALAMAN: PEMBAYARAN
+// ============================================================
+function pagePembayaran() {
+  const tx = orderState.txId ? DB.getTransaction(orderState.txId) : null;
+  if (!tx) { navigate('home'); return ''; }
+
+  if (tx.status === 'success') return pagePaymentSuccess(tx);
+
+  const methodInfo = PAYMENT_METHODS.find(m => m.id === tx.payment_method);
+  const expiresAt = tx.payment_expires ? new Date(tx.payment_expires) : new Date(Date.now() + 15*60*1000);
+
+  return `
+  <div class="max-w-lg mx-auto px-4 py-8">
+    <!-- Step indicator -->
+    <div class="step-indicator mb-8 justify-center">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:var(--accent-glow)">
+        <i class="${methodInfo?.icon || 'fas fa-qrcode'} text-2xl" style="color:var(--accent)"></i>
+      </div>
+      <h2 class="text-2xl font-bold" style="font-family:Outfit">Pembayaran ${methodInfo?.name || ''}</h2>
+      <p class="text-sm mt-1" style="color:var(--muted)">Selesaikan pembayaran sebelum waktu habis</p>
+    </div>
+
+    <!-- Timer -->
+    <div class="card mb-4 text-center" style="background:var(--bg2)">
+      <div class="text-xs font-semibold mb-1" style="color:var(--muted)">SISA WAKTU PEMBAYARAN</div>
+      <div class="text-3xl font-black countdown" id="pay-timer" style="color:var(--warn);font-family:Outfit" data-expires="${expiresAt.toISOString()}">
+        --:--
+      </div>
+    </div>
+
+    <!-- Total -->
+    <div class="card mb-4 text-center" style="background:linear-gradient(135deg,rgba(0,230,118,0.08),rgba(0,191,165,0.04));border-color:rgba(0,230,118,0.2)">
+      <div class="text-xs font-semibold mb-1" style="color:var(--muted)">TOTAL BAYAR</div>
+      <div class="text-3xl font-black" style="color:var(--accent);font-family:Outfit">${formatRupiah(tx.total)}</div>
+    </div>
+
+    <!-- QR Code (untuk QRIS) -->
+    ${tx.payment_method === 'qris' ? `
+    <div class="card mb-4 text-center">
+      <div class="text-xs font-semibold mb-3" style="color:var(--muted)">SCAN QR CODE</div>
+      <div class="inline-block p-4 bg-white rounded-2xl">
+        <div id="qr-code"></div>
+      </div>
+      <p class="text-xs mt-3" style="color:var(--muted)">Buka aplikasi e-wallet / mobile banking, scan QR di atas</p>
+    </div>` : `
+    <div class="card mb-4 text-center" style="background:var(--bg2)">
+      <div class="text-xs font-semibold mb-2" style="color:var(--muted)">INSTRUKSI PEMBAYARAN</div>
+      <div class="text-sm" style="color:var(--text2)">
+        ${tx.payment_method === 'gopay' ? 'Buka aplikasi Gojek > GoPay > Transfer > masukkan nomor tujuan yang muncul setelah pembayaran diproses.' :
+          tx.payment_method === 'ovo' ? 'Buka aplikasi OVO > Transfer > ke rekening yang ditampilkan setelah pembayaran diproses.' :
+          tx.payment_method === 'dana' ? 'Buka aplikasi DANA > Kirim > ke akun DANA yang ditampilkan setelah pembayaran diproses.' :
+          'Transfer ke rekening bank yang ditampilkan. Pastikan nominal transfer sesuai.'}
+      </div>
+    </div>`}
+
+    <!-- Detail transaksi -->
+    <div class="card mb-4" style="background:var(--bg2)">
+      <div class="text-xs font-semibold mb-3" style="color:var(--muted)">DETAIL TRANSAKSI</div>
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">ID Transaksi</span>
+        <span class="font-mono font-semibold cursor-pointer" onclick="copyText('${tx.id}')" title="Klik untuk salin">${tx.id} <i class="fas fa-copy text-xs" style="color:var(--muted)"></i></span>
+      </div>
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">Produk</span>
+        <span>${tx.product.name}</span>
+      </div>
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">Tujuan</span>
+        <span>${tx.customer_id}</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span style="color:var(--text2)">Status</span>
+        <span class="badge badge-pending"><i class="fas fa-clock"></i> Menunggu Pembayaran</span>
+      </div>
+    </div>
+
+    <!-- Tombol simulasi bayar (untuk demo) -->
+    <div class="card mb-4 text-center" style="background:rgba(255,171,64,0.05);border-color:rgba(255,171,64,0.2)">
+      <p class="text-xs mb-3" style="color:var(--warn)"><i class="fas fa-info-circle mr-1"></i> Mode Demo — Klik tombol untuk simulasi pembayaran berhasil</p>
+      <button class="btn-outline text-sm" style="border-color:var(--warn);color:var(--warn)" onclick="simulatePaymentSuccess()">
+        <i class="fas fa-play mr-1"></i>Simulasi Bayar Berhasil
+      </button>
+    </div>
+
+    <button class="btn-outline w-full text-center" onclick="navigate('riwayat')">
+      <i class="fas fa-list mr-2"></i>Lihat Riwayat Transaksi
+    </button>
+  </div>`;
+}
+
+function pagePaymentSuccess(tx) {
+  return `
+  <div class="max-w-lg mx-auto px-4 py-8 text-center">
+    <!-- Step indicator -->
+    <div class="step-indicator mb-8 justify-center">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+
+    <div class="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style="background:rgba(0,230,118,0.15)">
+      <i class="fas fa-check-circle text-4xl" style="color:var(--accent)"></i>
+    </div>
+    <h2 class="text-2xl font-bold mb-2" style="font-family:Outfit">Pembayaran Berhasil</h2>
+    <p class="mb-6" style="color:var(--text2)">Transaksi kamu sedang diproses. Pulsa akan masuk otomatis.</p>
+
+    <div class="card mb-4 text-left" style="background:var(--bg2)">
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">ID Transaksi</span>
+        <span class="font-mono font-semibold cursor-pointer" onclick="copyText('${tx.id}')">${tx.id} <i class="fas fa-copy text-xs" style="color:var(--muted)"></i></span>
+      </div>
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">Produk</span>
+        <span>${tx.product.name}</span>
+      </div>
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">Tujuan</span>
+        <span>${tx.customer_id}</span>
+      </div>
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">Total Bayar</span>
+        <span class="font-bold" style="color:var(--accent)">${formatRupiah(tx.total)}</span>
+      </div>
+      ${tx.sn ? `
+      <div class="flex justify-between mb-2 text-sm">
+        <span style="color:var(--text2)">Serial Number</span>
+        <span class="font-mono cursor-pointer" onclick="copyText('${tx.sn}')">${tx.sn} <i class="fas fa-copy text-xs" style="color:var(--muted)"></i></span>
+      </div>` : ''}
+      <div class="flex justify-between text-sm">
+        <span style="color:var(--text2)">Status</span>
+        <span class="badge badge-success"><i class="fas fa-check"></i> Berhasil</span>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button class="btn-primary flex-1 text-center" onclick="orderState={category:null,operator:null,product:null,phone:null,paymentMethod:null,txId:null};navigate('home')">
+        <i class="fas fa-home mr-2"></i>Transaksi Baru
+      </button>
+      <button class="btn-outline flex-1 text-center" onclick="navigate('riwayat')">
+        <i class="fas fa-list mr-2"></i>Riwayat
+      </button>
+    </div>
+  </div>`;
+}
+
+function simulatePaymentSuccess() {
+  if (!orderState.txId) return;
+  API.simulatePayment(orderState.txId);
+  toast('Pembayaran berhasil diproses!', 'success');
+  render();
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Disalin ke clipboard', 'info')).catch(() => {});
+}
+
+// Timer countdown
+setInterval(() => {
+  const el = document.getElementById('pay-timer');
+  if (!el) return;
+  const exp = new Date(el.dataset.expires);
+  const diff = Math.max(0, Math.floor((exp - Date.now()) / 1000));
+  const m = String(Math.floor(diff / 60)).padStart(2, '0');
+  const s = String(diff % 60).padStart(2, '0');
+  el.textContent = `${m}:${s}`;
+  if (diff <= 60) el.style.color = 'var(--danger)';
+  if (diff <= 0) el.textContent = 'Waktu Habis';
+}, 1000);
+
+// Generate QR Code setelah render
+const origRender = render;
+// QR akan di-generate via MutationObserver
+const qrObserver = new MutationObserver(() => {
+  const qrEl = document.getElementById('qr-code');
+  if (qrEl && qrEl.childNodes.length === 0) {
+    const tx = orderState.txId ? DB.getTransaction(orderState.txId) : null;
+    if (tx?.qr_string) {
+      new QRCode(qrEl, {
+        text: tx.qr_string,
+        width: 200,
+        height: 200,
+        colorDark: '#060d09',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  }
+});
+qrObserver.observe(document.getElementById('app'), { childList: true, subtree: true });
+
+// ============================================================
+// HALAMAN: RIWAYAT TRANSAKSI
+// ============================================================
+function pageRiwayat() {
+  const txs = DB.getTransactions();
+  return `
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold mb-2" style="font-family:Outfit">Riwayat Transaksi</h2>
+    <p class="mb-6" style="color:var(--muted)">${txs.length} transaksi tercatat</p>
+
+    ${txs.length === 0 ? `
+      <div class="text-center py-20" style="color:var(--muted)">
+        <i class="fas fa-receipt text-5xl mb-4"></i>
+        <p class="text-lg mb-4">Belum ada transaksi</p>
+        <button class="btn-primary" onclick="navigate('home')"><i class="fas fa-shopping-bag mr-2"></i>Mulai Belanja</button>
+      </div>
+    ` : `
+      <div class="space-y-3">
+        ${txs.map(tx => {
+          const statusBadge = tx.status === 'success' ? '<span class="badge badge-success"><i class="fas fa-check"></i> Berhasil</span>'
+            : tx.status === 'pending' ? '<span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>'
+            : '<span class="badge badge-fail"><i class="fas fa-times"></i> Gagal</span>';
+          return `
+          <div class="card flex flex-col sm:flex-row sm:items-center gap-3 cursor-pointer" onclick="showTxDetail('${tx.id}')">
+            <div class="flex-1">
+              <div class="font-semibold text-sm mb-1">${tx.product.name}</div>
+              <div class="text-xs" style="color:var(--muted)">
+                <i class="fas fa-user mr-1"></i>${tx.customer_id}
+                <span class="mx-2">|</span>
+                <i class="fas fa-clock mr-1"></i>${timeAgo(tx.created_at)}
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              ${statusBadge}
+              <div class="text-right">
+                <div class="font-bold" style="color:var(--accent)">${formatRupiah(tx.total)}</div>
+                <div class="text-xs" style="color:var(--muted)">${tx.id}</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <button class="btn-outline w-full text-center mt-6" onclick="if(confirm('Hapus semua riwayat?')){localStorage.removeItem('pulsaku_transactions');render();}">
+        <i class="fas fa-trash mr-2"></i>Hapus Semua Riwayat
+      </button>
+    `}
+  </div>`;
+}
+
+function showTxDetail(txId) {
+  const tx = DB.getTransaction(txId);
+  if (!tx) return;
+  const statusBadge = tx.status === 'success' ? '<span class="badge badge-success"><i class="fas fa-check"></i> Berhasil</span>'
+    : tx.status === 'pending' ? '<span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>'
+    : '<span class="badge badge-fail"><i class="fas fa-times"></i> Gagal</span>';
+
+  showModal(`
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold" style="font-family:Outfit">Detail Transaksi</h3>
+      <button onclick="closeModal()" style="color:var(--muted)"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="space-y-3 text-sm">
+      <div class="flex justify-between"><span style="color:var(--muted)">ID</span><span class="font-mono cursor-pointer" onclick="copyText('${tx.id}')">${tx.id} <i class="fas fa-copy text-xs" style="color:var(--muted)"></i></span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Produk</span><span>${tx.product.name}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Tujuan</span><span>${tx.customer_id}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Harga</span><span>${formatRupiah(tx.price)}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Biaya Admin</span><span>${formatRupiah(tx.admin_fee)}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Total</span><span class="font-bold" style="color:var(--accent)">${formatRupiah(tx.total)}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Pembayaran</span><span>${PAYMENT_METHODS.find(m=>m.id===tx.payment_method)?.name || tx.payment_method}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Waktu</span><span>${formatDate(tx.created_at)}</span></div>
+      <div class="flex justify-between"><span style="color:var(--muted)">Status</span>${statusBadge}</div>
+      ${tx.sn ? `<div class="flex justify-between"><span style="color:var(--muted)">SN</span><span class="font-mono cursor-pointer" onclick="copyText('${tx.sn}')">${tx.sn} <i class="fas fa-copy text-xs" style="color:var(--muted)"></i></span></div>` : ''}
+      ${tx.note ? `<div class="flex justify-between"><span style="color:var(--muted)">Catatan</span><span>${tx.note}</span></div>` : ''}
+    </div>
+    ${tx.status === 'pending' ? `
+      <div class="mt-4 flex gap-2">
+        <button class="btn-primary flex-1 text-center text-sm" onclick="API.simulatePayment('${tx.id}');closeModal();render();toast('Pembayaran berhasil','success');">
+          <i class="fas fa-check mr-1"></i>Simulasi Bayar
+        </button>
+        <button class="btn-outline flex-1 text-center text-sm" style="border-color:var(--danger);color:var(--danger)" onclick="DB.updateTransaction('${tx.id}',{status:'failed',note:'Dibatalkan',updated_at:new Date().toISOString()});closeModal();render();toast('Transaksi dibatalkan','error');">
+          <i class="fas fa-times mr-1"></i>Batalkan
+        </button>
+      </div>
+    ` : ''}
+  `);
+}
+
+// ============================================================
+// HALAMAN: LOGIN ADMIN
+// ============================================================
+function pageLoginAdmin() {
+  if (DB.getAdminSession()) { navigate('admin'); return ''; }
+  return `
+  <div class="min-h-screen flex items-center justify-center px-4" style="background:var(--bg)">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background:var(--accent-glow)">
+          <i class="fas fa-shield-halved text-2xl" style="color:var(--accent)"></i>
+        </div>
+        <h1 class="text-2xl font-bold" style="font-family:Outfit">Admin Login</h1>
+        <p class="text-sm mt-1" style="color:var(--muted)">Masuk ke panel admin PulsaKu</p>
+      </div>
+      <div class="card" style="background:var(--bg2)">
+        <div class="mb-4">
+          <label class="block text-sm font-semibold mb-2" style="color:var(--text2)">Username</label>
+          <input id="admin-user" type="text" class="input-field" placeholder="Masukkan username" value="admin">
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-semibold mb-2" style="color:var(--text2)">Password</label>
+          <div class="relative">
+            <input id="admin-pass" type="password" class="input-field pr-11" placeholder="Masukkan password" value="admin123"
+              onkeydown="if(event.key==='Enter')doAdminLogin()">
+            <button class="absolute right-3 top-1/2 -translate-y-1/2" style="color:var(--muted)" onclick="togglePassVisibility(this)">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn-primary w-full text-center" onclick="doAdminLogin()">
+          <i class="fas fa-right-to-bracket mr-2"></i>Masuk
+        </button>
+        <p class="text-center text-xs mt-4" style="color:var(--muted)">
+          Default: admin / admin123
+        </p>
+      </div>
+      <p class="text-center mt-6">
+        <span class="text-sm cursor-pointer" style="color:var(--muted)" onclick="navigate('home')">
+          <i class="fas fa-arrow-left mr-1"></i>Kembali ke Beranda
+        </span>
+      </p>
+    </div>
+  </div>`;
+}
+
+function togglePassVisibility(btn) {
+  const input = btn.parentElement.querySelector('input');
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text'; icon.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password'; icon.className = 'fas fa-eye';
+  }
+}
+
+function doAdminLogin() {
+  const user = document.getElementById('admin-user')?.value;
+  const pass = document.getElementById('admin-pass')?.value;
+  const settings = DB.getSettings();
+  // Cek apakah admin user/pass sudah diubah di settings
+  const validUser = settings.admin_user || CONFIG.adminUser;
+  const validPass = settings.admin_pass || CONFIG.adminPass;
+  if (user === validUser && pass === validPass) {
+    DB.setAdminSession({ user, loginAt: new Date().toISOString() });
+    toast('Login berhasil', 'success');
+    navigate('admin');
+  } else {
+    toast('Username atau password salah', 'error');
+  }
+}
+
+// ============================================================
+// HALAMAN: ADMIN DASHBOARD
+// ============================================================
+let adminTab = 'overview';
+
+function pageAdmin() {
+  if (!DB.getAdminSession()) { navigate('login-admin'); return ''; }
+  const txs = DB.getTransactions();
+  const totalRevenue = txs.filter(t=>t.status==='success').reduce((s,t)=>s+t.total,0);
+  const successCount = txs.filter(t=>t.status==='success').length;
+  const pendingCount = txs.filter(t=>t.status==='pending').length;
+  const failCount = txs.filter(t=>t.status==='failed').length;
+  const successRate = txs.length > 0 ? Math.round(successCount/txs.length*100) : 0;
+
+  return `
+  <div class="min-h-screen" style="background:var(--bg)">
+    <!-- Admin Nav -->
+    <div class="border-b" style="background:var(--bg2);border-color:var(--border)">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),#00bfa5)">
+            <i class="fas fa-bolt text-xs" style="color:var(--bg)"></i>
+          </div>
+          <span class="font-bold" style="font-family:Outfit">PulsaKu</span>
+          <span class="badge badge-info text-xs ml-2">ADMIN</span>
+        </div>
+        <button class="text-sm flex items-center gap-2" style="color:var(--muted)" onclick="DB.clearAdminSession();navigate('home');toast('Logout berhasil','info');">
+          <i class="fas fa-right-from-bracket"></i>Logout
+        </button>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-6 flex gap-6">
+      <!-- Sidebar -->
+      <div class="hidden md:block w-56 flex-shrink-0">
+        <nav class="space-y-1">
+          ${[
+            {id:'overview',icon:'fa-chart-pie',label:'Overview'},
+            {id:'transactions',icon:'fa-receipt',label:'Transaksi'},
+            {id:'settings',icon:'fa-gear',label:'Pengaturan'}
+          ].map(tab => `
+            <button class="w-full text-left px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 transition-all ${adminTab===tab.id ? '' : ''}"
+              style="${adminTab===tab.id ? 'background:var(--accent-glow);color:var(--accent)' : 'color:var(--text2)'}"
+              onclick="adminTab='${tab.id}';render()">
+              <i class="fas ${tab.icon} w-4"></i>${tab.label}
+            </button>
+          `).join('')}
+        </nav>
+        <div class="mt-8 card text-xs" style="background:var(--bg2);color:var(--muted)">
+          <div class="mb-2 font-semibold" style="color:var(--text2)">Mode Demo</div>
+          <p>Data disimpan di localStorage browser. Untuk production, hubungkan ke backend + database server.</p>
+        </div>
+      </div>
+
+      <!-- Mobile tabs -->
+      <div class="md:hidden fixed bottom-0 left-0 right-0 z-50 flex border-t" style="background:var(--bg2);border-color:var(--border)">
+        ${[
+          {id:'overview',icon:'fa-chart-pie',label:'Overview'},
+          {id:'transactions',icon:'fa-receipt',label:'Transaksi'},
+          {id:'settings',icon:'fa-gear',label:'Setting'}
+        ].map(tab => `
+          <button class="flex-1 py-3 text-center text-xs ${adminTab===tab.id?'':'opacity-50'}"
+            style="color:${adminTab===tab.id?'var(--accent)':'var(--text2)'}"
+            onclick="adminTab='${tab.id}';render()">
+            <i class="fas ${tab.icon} block text-lg mb-1"></i>${tab.label}
+          </button>
+        `).join('')}
+      </div>
+
+      <!-- Content -->
+      <div class="flex-1 pb-20 md:pb-0">
+        ${adminTab === 'overview' ? adminOverview(txs, totalRevenue, successCount, pendingCount, failCount, successRate) :
+          adminTab === 'transactions' ? adminTransactions(txs) :
+          adminSettings()}
+      </div>
+    </div>
+  </div>`;
+}
+
+function adminOverview(txs, totalRevenue, successCount, pendingCount, failCount, successRate) {
+  return `
+    <h2 class="text-xl font-bold mb-6" style="font-family:Outfit">Dashboard Overview</h2>
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      ${[
+        { label:'Total Transaksi', value: txs.length, icon:'fa-receipt', color:'var(--info)' },
+        { label:'Pendapatan', value: formatRupiah(totalRevenue), icon:'fa-money-bill-trend-up', color:'var(--accent)' },
+        { label:'Berhasil', value: successCount, icon:'fa-check-circle', color:'var(--accent)' },
+        { label:'Pending', value: pendingCount, icon:'fa-clock', color:'var(--warn)' }
+      ].map(s => `
+        <div class="card">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas ${s.icon} text-sm" style="color:${s.color}"></i>
+            <span class="text-xs" style="color:var(--muted)">${s.label}</span>
+          </div>
+          <div class="text-xl font-bold" style="font-family:Outfit">${s.value}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Success rate + Chart -->
+    <div class="grid lg:grid-cols-3 gap-4 mb-8">
+      <div class="card flex flex-col items-center justify-center">
+        <div class="text-xs mb-2" style="color:var(--muted)">SUCCESS RATE</div>
+        <div class="relative w-28 h-28">
+          <svg viewBox="0 0 36 36" class="w-full h-full" style="transform:rotate(-90deg)">
+            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              fill="none" stroke="var(--border)" stroke-width="3"/>
+            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="${successRate}, 100"
+              stroke-linecap="round"/>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center text-2xl font-black" style="font-family:Outfit">${successRate}%</div>
+        </div>
+      </div>
+      <div class="card lg:col-span-2">
+        <div class="text-xs font-semibold mb-4" style="color:var(--muted)">TRANSAKSI 7 HARI TERAKHIR</div>
+        <canvas id="chart-revenue" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="card">
+      <div class="flex justify-between items-center mb-4">
+        <div class="text-xs font-semibold" style="color:var(--muted)">TRANSAKSI TERBARU</div>
+        <button class="text-xs" style="color:var(--accent)" onclick="adminTab='transactions';render()">Lihat Semua <i class="fas fa-arrow-right ml-1"></i></button>
+      </div>
+      ${txs.length === 0 ? '<p class="text-sm text-center py-8" style="color:var(--muted)">Belum ada transaksi</p>' : `
+      <div class="overflow-x-auto">
+        <table>
+          <thead><tr><th>ID</th><th>Produk</th><th>Total</th><th>Status</th><th>Waktu</th></tr></thead>
+          <tbody>
+            ${txs.slice(0,5).map(tx => `
+              <tr class="cursor-pointer" onclick="showTxDetail('${tx.id}')">
+                <td class="font-mono text-xs">${tx.id}</td>
+                <td>${tx.product.name}<br><span class="text-xs" style="color:var(--muted)">${tx.customer_id}</span></td>
+                <td class="font-semibold">${formatRupiah(tx.total)}</td>
+                <td>${tx.status==='success'?'<span class="badge badge-success">Berhasil</span>':tx.status==='pending'?'<span class="badge badge-pending">Pending</span>':'<span class="badge badge-fail">Gagal</span>'}</td>
+                <td class="text-xs">${timeAgo(tx.created_at)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`}
+    </div>
+  `;
+}
+
+function adminTransactions(txs) {
+  return `
+    <h2 class="text-xl font-bold mb-4" style="font-family:Outfit">Semua Transaksi</h2>
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <input id="tx-search" type="text" class="input-field" placeholder="Cari ID, produk, atau nomor..." oninput="filterTxTable(this.value)">
+      <select id="tx-filter" class="input-field" style="max-width:160px" onchange="filterTxTable(document.getElementById('tx-search').value)">
+        <option value="all">Semua Status</option>
+        <option value="success">Berhasil</option>
+        <option value="pending">Pending</option>
+        <option value="failed">Gagal</option>
+      </select>
+    </div>
+    <div class="card p-0 overflow-x-auto" id="tx-table-wrap">
+      ${txs.length === 0 ? '<p class="text-sm text-center py-12" style="color:var(--muted)">Belum ada transaksi</p>' : `
+      <table id="tx-table">
+        <thead><tr><th>ID</th><th>Produk</th><th>Tujuan</th><th>Bayar</th><th>Metode</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr></thead>
+        <tbody>
+          ${txs.map(tx => `
+            <tr data-status="${tx.status}" data-search="${tx.id} ${tx.product.name} ${tx.customer_id}">
+              <td class="font-mono text-xs">${tx.id}</td>
+              <td class="text-sm">${tx.product.name}</td>
+              <td class="text-sm">${tx.customer_id}</td>
+              <td class="font-semibold">${formatRupiah(tx.total)}</td>
+              <td class="text-xs">${PAYMENT_METHODS.find(m=>m.id===tx.payment_method)?.name||tx.payment_method}</td>
+              <td>${tx.status==='success'?'<span class="badge badge-success">Berhasil</span>':tx.status==='pending'?'<span class="badge badge-pending">Pending</span>':'<span class="badge badge-fail">Gagal</span>'}</td>
+              <td class="text-xs whitespace-nowrap">${formatDate(tx.created_at)}</td>
+              <td>
+                <button class="text-xs px-2 py-1 rounded" style="color:var(--accent);background:var(--accent-glow)" onclick="showTxDetail('${tx.id}')">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;
+}
+
+function filterTxTable(query) {
+  const status = document.getElementById('tx-filter')?.value || 'all';
+  const q = query.toLowerCase();
+  document.querySelectorAll('#tx-table tbody tr').forEach(tr => {
+    const matchSearch = !q || (tr.dataset.search || '').toLowerCase().includes(q);
+    const matchStatus = status === 'all' || tr.dataset.status === status;
+    tr.style.display = matchSearch && matchStatus ? '' : 'none';
+  });
+}
+
+function adminSettings() {
+  const s = DB.getSettings();
+  return `
+    <h2 class="text-xl font-bold mb-6" style="font-family:Outfit">Pengaturan</h2>
+
+    <!-- API Digiflazz -->
+    <div class="card mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(255,61,0,0.1)">
+          <i class="fas fa-plug" style="color:#ff3d00"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm">API Digiflazz</h3>
+          <p class="text-xs" style="color:var(--muted)">Provider harga & pengisian pulsa</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">Username</label>
+          <input id="set-df-user" type="text" class="input-field" value="${s.digiflazz_user || ''}">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">API Key</label>
+          <input id="set-df-key" type="password" class="input-field" value="${s.digiflazz_key || ''}">
+        </div>
+      </div>
+    </div>
+
+    <!-- API Tripay -->
+    <div class="card mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(38,198,218,0.1)">
+          <i class="fas fa-credit-card" style="color:var(--info)"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm">API Tripay (Pembayaran)</h3>
+          <p class="text-xs" style="color:var(--muted)">QRIS, e-wallet, transfer bank</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">API Key</label>
+          <input id="set-tp-key" type="text" class="input-field" value="${s.tripay_key || ''}">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">Private Key</label>
+          <input id="set-tp-private" type="password" class="input-field" value="${s.tripay_private || ''}">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">Merchant Code</label>
+          <input id="set-tp-merchant" type="text" class="input-field" value="${s.tripay_merchant || ''}">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">Mode</label>
+          <select id="set-tp-mode" class="input-field">
+            <option value="sandbox" ${s.tripay_mode==='sandbox'?'selected':''}>Sandbox (Testing)</option>
+            <option value="production" ${s.tripay_mode==='production'?'selected':''}>Production (Live)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Umum -->
+    <div class="card mb-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:var(--accent-glow)">
+          <i class="fas fa-sliders" style="color:var(--accent)"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm">Pengaturan Umum</h3>
+          <p class="text-xs" style="color:var(--muted)">Biaya admin & keamanan</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">Biaya Admin per Transaksi (Rp)</label>
+          <input id="set-fee" type="number" class="input-field" value="${s.admin_fee || 0}">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1" style="color:var(--text2)">Ubah Password Admin</label>
+          <input id="set-new-pass" type="password" class="input-field" placeholder="Kosongkan jika tidak diubah">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary w-full text-center" onclick="saveSettings()">
+      <i class="fas fa-save mr-2"></i>Simpan Pengaturan
+    </button>
+
+    <div class="card mt-6 text-xs" style="background:var(--bg2);color:var(--muted)">
+      <div class="font-semibold mb-2" style="color:var(--text2)"><i class="fas fa-info-circle mr-1" style="color:var(--info)"></i> Catatan Production</div>
+      <ul class="list-disc pl-4 space-y-1">
+        <li>API key disimpan di localStorage browser (demo). Di production, simpan di server-side (.env).</li>
+        <li>Ganti fungsi mock di objek <code>API</code> dengan <code>fetch()</code> ke backend Anda.</li>
+        <li>Backend Anda memanggil Digiflazz/Tripay API — jangan panggil dari frontend (bocor API key).</li>
+        <li>Gunakan webhook/callback dari Tripay untuk update status pembayaran otomatis.</li>
+        <li>Ganti localStorage dengan database (MySQL/PostgreSQL/MongoDB) di backend.</li>
+      </ul>
+    </div>
+  `;
+}
+
+function saveSettings() {
+  const s = DB.getSettings();
+  s.digiflazz_user = document.getElementById('set-df-user')?.value || '';
+  s.digiflazz_key = document.getElementById('set-df-key')?.value || '';
+  s.tripay_key = document.getElementById('set-tp-key')?.value || '';
+  s.tripay_private = document.getElementById('set-tp-private')?.value || '';
+  s.tripay_merchant = document.getElementById('set-tp-merchant')?.value || '';
+  s.tripay_mode = document.getElementById('set-tp-mode')?.value || 'sandbox';
+  s.admin_fee = parseInt(document.getElementById('set-fee')?.value) || 0;
+  const newPass = document.getElementById('set-new-pass')?.value;
+  if (newPass && newPass.length >= 6) {
+    s.admin_pass = newPass;
+  } else if (newPass && newPass.length > 0) {
+    toast('Password minimal 6 karakter', 'error'); return;
+  }
+  DB.saveSettings(s);
+  toast('Pengaturan berhasil disimpan', 'success');
+}
+
+// ============================================================
+// CHART (Admin Overview)
+// ============================================================
+function initChart() {
+  const canvas = document.getElementById('chart-revenue');
+  if (!canvas) return;
+  const txs = DB.getTransactions().filter(t => t.status === 'success');
+  // Data 7 hari terakhir
+  const days = [];
+  const revenue = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    days.push(d.toLocaleDateString('id-ID', { weekday:'short', day:'numeric' }));
+    revenue.push(txs.filter(t => t.created_at.slice(0,10) === key).reduce((s,t) => s + t.total, 0));
+  }
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{
+        label: 'Pendapatan',
+        data: revenue,
+        backgroundColor: 'rgba(0,230,118,0.3)',
+        borderColor: 'rgba(0,230,118,0.8)',
+        borderWidth: 2,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color:'rgba(30,51,38,0.5)' }, ticks: { color:'#4a6e56', font:{size:11} } },
+        y: {
+          grid: { color:'rgba(30,51,38,0.5)' },
+          ticks: {
+            color: '#4a6e56',
+            font: { size:11 },
+            callback: v => v >= 1000 ? 'Rp' + (v/1000) + 'k' : 'Rp' + v
+          }
+        }
+      }
+    }
+  });
+}
+
+// Init chart setelah render
+const chartObserver = new MutationObserver(() => {
+  if (document.getElementById('chart-revenue')) {
+    setTimeout(initChart, 100);
+  }
+});
+chartObserver.observe(document.getElementById('app'), { childList: true, subtree: true });
+
+// ============================================================
+// INISIALISASI APLIKASI
+// ============================================================
+function initApp() {
+  // Seed demo data jika kosong
+  if (DB.getTransactions().length === 0) {
+    seedDemoData();
+  }
+  navigate('home');
+}
+
+function seedDemoData() {
+  const demoProducts = [
+    ALL_PRODUCTS.find(p => p.id === 'pulsa-telkomsel-50000'),
+    ALL_PRODUCTS.find(p => p.id === 'pulsa-indosat-25000'),
+    ALL_PRODUCTS.find(p => p.id === 'paket-data-xl-2'),
+    ALL_PRODUCTS.find(p => p.id === 'ew-gopay-50000'),
+    ALL_PRODUCTS.find(p => p.id === 'pulsa-tri-10000'),
+    ALL_PRODUCTS.find(p => p.id === 'token-pln-100000'),
+    ALL_PRODUCTS.find(p => p.id === 'pulsa-smartfren-20000'),
+    ALL_PRODUCTS.find(p => p.id === 'ew-dana-100000'),
+  ];
+  const phones = ['081234567890','081598765432','081788778877','089512345678','081299887766','088877665544','085311223344','087744556677'];
+  const methods = ['qris','gopay','ovo','dana','bank'];
+  const statuses = ['success','success','success','success','success','pending','failed','success'];
+  const fee = CONFIG.adminFee;
+
+  demoProducts.forEach((prod, i) => {
+    if (!prod) return;
+    const daysAgo = Math.floor(Math.random() * 7);
+    const date = new Date(); date.setDate(date.getDate() - daysAgo);
+    date.setHours(Math.floor(Math.random()*14)+8, Math.floor(Math.random()*60));
+    const tx = {
+      id: 'TX' + (Date.now() - i*100000).toString(36).toUpperCase() + Math.random().toString(36).substr(2,3).toUpperCase(),
+      product: prod,
+      customer_id: phones[i],
+      price: prod.price,
+      admin_fee: fee,
+      total: prod.price + fee,
+      payment_method: methods[i % methods.length],
+      status: statuses[i],
+      created_at: date.toISOString(),
+      updated_at: date.toISOString(),
+      sn: statuses[i]==='success' ? 'SN'+Math.random().toString(36).substr(2,10).toUpperCase() : null,
+      note: statuses[i]==='failed' ? 'Saldo provider tidak mencukupi' : null,
+      payment_ref: 'PAY' + Math.random().toString(36).substr(2,8).toUpperCase(),
+      payment_expires: new Date(date.getTime() + 15*60*1000).toISOString(),
+      qr_string: `pulsaku:demo:${i}:${prod.price}`,
+      paid_at: statuses[i]==='success' ? new Date(date.getTime() + 30000).toISOString() : null
+    };
+    DB.saveTransaction(tx);
+  });
+}
+
+// Jalankan aplikasi
+initApp();
+</script>
+</body>
+</html>
